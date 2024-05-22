@@ -5,6 +5,7 @@ import io
 from fastapi.responses import JSONResponse
 
 
+
 user_id = "FWi1BS3D9DS9WUxrFUPyPKwNUgA3"
 Authorization = "0c2fe6e05c934d1ea513af8fba346fd8"
 
@@ -22,6 +23,7 @@ def create_voice_job(text = "Hi man how are you doing today?",
                       output_format = "mp3", 
                       voice_engine = "PlayHT2.0", 
                       speed = 0.86,
+                      seed= 3,
                       emotion = "male_happy",
                       style_guidance = 10):
 
@@ -34,6 +36,7 @@ def create_voice_job(text = "Hi man how are you doing today?",
         "voice_engine": voice_engine,
         "speed": speed,
         "emotion": emotion,
+        "seed": seed,
         "style_guidance": style_guidance
     }
     headers = {
@@ -54,6 +57,10 @@ def create_voice_job(text = "Hi man how are you doing today?",
             data = json.loads(response_lines[i + 1].replace("data: ", ""))
             audio_url = data["url"]
             break
+
+    if not audio_url:
+        # raise response
+        return JSONResponse(status_code=400, content={"detail": "url is None, Text is empty or pad response from api"})
         
     return audio_url
 
@@ -113,19 +120,21 @@ def predict_environment_sound(sentence):
 
 def get_environment_sound(environment):
     sounds = {
-    "rain": "env_sounds/rainy-day-in-town-with-birds-singing-194011.mp3",
-    "fire": "env_sounds/designed-fire-winds-swoosh-04-116788.mp3",
-    "animals": "env_sounds/crickets-chirping_nature-sound-206330.mp3",
-    "birds": "env_sounds/singing-club-of-birds_nature-sound-204240.mp3"
+    "rain": "routers/audio/env_sounds/rainy-day-in-town-with-birds-singing-194011.mp3",
+    "fire": "routers/audio/env_sounds/designed-fire-winds-swoosh-04-116788.mp3",
+    "animals": "routers/audio/env_sounds/crickets-chirping_nature-sound-206330.mp3",
+    "birds": "routers/audio/env_sounds/singing-club-of-birds_nature-sound-204240.mp3"
     }
 
-    env_sound_file = sounds.get(environment, AudioSegment.silent(duration=0))  # TEST HERE
+    env_sound_file = sounds.get(environment, "routers/audio/env_sounds/singing-club-of-birds_nature-sound-204240.mp3")  # TEST HERE
     env_sound = AudioSegment.from_file(env_sound_file)
-
     #adjust volume
     env_sound = env_sound - 12
 
     return env_sound
 
 def tokenize_text(text):
-    return text.split(".")
+    tokenized = text.split(".")
+    #remove empty string
+    tokenized = list(filter(None, tokenized))
+    return tokenized

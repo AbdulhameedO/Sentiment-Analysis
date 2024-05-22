@@ -6,9 +6,9 @@ from pymongo import errors as mongo_errors
 from fastapi import HTTPException
 from fastapi import status
 
-# Intialize the MONGO_URI with gpteam and MONGO_DB with 12345
 MONGO_URI = "mongodb+srv://gpteam:T1u26RnOuvjrPPv9@gp.o3j9wfq.mongodb.net/"
 MONGO_DB = "gpteam"
+
 class Client:
     _instance = None
 

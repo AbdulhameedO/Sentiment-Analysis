@@ -143,12 +143,11 @@ async def text_to_speech(text: str):
             emotion = predict_emotion(sentence)
             env = predict_environment_sound(sentence)
             env_sound = get_environment_sound(env)
-            print(f"Generating audio for sentence: {sentence} with emotion: {emotion}")
             audio_url = create_voice_job(sentence, emotion=emotion)
             audio = audio_from_url(audio_url)
             combined = audio.overlay(env_sound, position=0)
             merged_audio += combined
-        merged_audio.export("files/generated_audio.mp3", format="mp3")
+        merged_audio.export("generated_audio.mp3", format="mp3")
         return JSONResponse(status_code=status.HTTP_200_OK, content={"detail": "text to speech successful"})
     except Exception as e:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"detail": "text to speech failed"})
