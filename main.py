@@ -4,7 +4,7 @@ from fastapi_pagination import add_pagination
 
 from routers.auth import auth
 from routers.users import users
-from routers.data_transfer import data_transfer
+from routers.audio import audio
 
 
 app = FastAPI(
@@ -25,6 +25,6 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(users.router)
-app.include_router(data_transfer.router)
+app.include_router(audio.router)
 
 add_pagination(app)

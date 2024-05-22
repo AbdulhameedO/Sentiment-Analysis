@@ -1,10 +1,13 @@
 from fastapi import APIRouter, status, UploadFile, File
 from fastapi.responses import JSONResponse, FileResponse
 
+# import audio_manipulation.py
+from .audio_manipulation import create_voice_job, audio_from_url, predict_emotion, predict_environment_sound,get_environment_sound
+
 
 router = APIRouter(
-    prefix="/data-transfer",
-    tags=["data-transfer"],
+    prefix="/audio",
+    tags=["audio"],
 )
 
 # Upload Text File
@@ -55,7 +58,7 @@ async def upload_text_file(file: UploadFile = File(...)):
     
 # Download Audio File
 @router.get(
-    "/download/{file_name}",
+    "/download",
     summary="download audio file",
     description="download audio file",
     responses={
@@ -91,8 +94,53 @@ async def upload_text_file(file: UploadFile = File(...)):
         }
     }
 )
-async def download_audio_file(filename: str):
+async def download_audio_file(audio_url: str):
     try:
-        return FileResponse(f"files/{filename}", filename=filename)
+        audio = audio_from_url(audio_url)
+        audio.export("files/generated_audio.mp3", format="mp3")
+        return FileResponse("files/generated_audio.mp3")
     except Exception as e:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"detail": "audio file not downloaded"})
+    
+
+# Text to Speech
+# First predict emotion and environment sound
+# Then create voice job
+# Then download audio file
+@router.post(
+    "/tts",
+    summary="text to speech",
+    description="text to speech",
+    responses={
+        status.HTTP_200_OK: {
+            "description": "text to speech successful",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "text to speech successful"
+                    }
+                }
+            }
+        },
+        status.HTTP_400_BAD_REQUEST: {
+            "description": "text to speech failed",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "text to speech failed"
+                    }
+                }
+            }
+        }
+    }
+)
+async def text_to_speech(text: str):
+    try:
+        emotion = predict_emotion(text)
+        environment_sound = predict_environment_sound(text)
+        audio_url = create_voice_job(text, emotion=emotion, style_guidance=environment_sound)
+        audio = audio_from_url(audio_url)
+        audio.export("files/generated_audio.mp3", format="mp3")
+        return FileResponse("files/generated_audio.mp3")
+    except Exception as e:
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"detail": "text to speech failed"})

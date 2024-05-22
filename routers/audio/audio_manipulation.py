@@ -8,29 +8,23 @@ user_id = "FWi1BS3D9DS9WUxrFUPyPKwNUgA3"
 Authorization = "0c2fe6e05c934d1ea513af8fba346fd8"
 
 #default values
-default_text = "Hi man how are you doing today?"
 default_voice = "s3://voice-cloning-zero-shot/a0fa25cc-5f42-4dd0-8a78-a950dd5297cd/original/manifest.json"
 # "s3://voice-cloning-zero-shot/a59cb96d-bba8-4e24-81f2-e60b888a0275/charlottenarrativesaad/manifest.json"
 #https://play.ht/app/voices to get the voice url
-default_output_format = "mp3"
-default_voice_engine = "PlayHT2.0"
-default_speed = 0.86 #[0:5]
 default_emotion = "male_happy"#male_sad,male_angry,male_surprised,male_fearful,male_disgust , same for female
 default_style_guidance = 10#int [0:30] 0 is neutral, 30 is very emotional
 
 #for more information on the api, visit
 #https://docs.play.ht/reference/api-generate-audio
 
-def create_voice_job(text,
-                      voice=default_voice, 
-                      output_format=default_output_format, 
-                      voice_engine=default_voice_engine, 
-                      speed=default_speed,
-                      emotion=default_emotion,
-                      style_guidance=default_style_guidance):
-    """
-    this function creates a voice job using the play.ht api
-    """
+def create_voice_job(text = "Hi man how are you doing today?",
+                      voice = default_voice, 
+                      output_format = "mp3", 
+                      voice_engine = "PlayHT2.0", 
+                      speed = 0.86,
+                      emotion = "male_happy",
+                      style_guidance = 10):
+
     url = "https://api.play.ht/api/v2/tts"
 
     payload = {
@@ -61,10 +55,8 @@ def create_voice_job(text,
             audio_url = data["url"]
             break
         
-    print("Audio URL:", audio_url)
+    # print("Audio URL:", audio_url)
     return audio_url
-   
-# generated_audio_url = create_voice_job("there is a new message for you.")
 
 
 
@@ -87,24 +79,6 @@ def audio_from_url(url):
 
 # audio = audio_from_url(generated_audio_url)
 
-
-
-# story_text = """Once upon a time, there was 2 boys who were best friends. They were always together. One day, they decided to go on an adventure. After a long journey, they finally found the treasure. They were so happy and celebrated their success. From that day on, they became nice.the father of the first one died.the second one was happy.gamal was playing football"""
-# story_text = """After a long journey, they finally found the treasure.They were so happy and celebrated their success.From that day on, they became nice.the father of the first one died.the second one was sad.gamal was playing football"""
-story_text = """Lily and Tom had always dreamed of finding hidden treasure.
-One sunny afternoon, while exploring an old forest, they found a mysterious map.
-Excitedly, they followed it, their hearts racing with anticipation.
-After a long and tiring search, they finally discovered a buried chest.
-They opened it and were overjoyed to find it filled with gold and jewels.
-Just then, a sudden storm hit, and they sought shelter in a nearby cave.
-Inside, they found an old man who had been trapped for days.
-He was weak and fearful.
-Tom shared their food and water with him, and Lily comforted him.
-The old man was grateful and told them stories of his past adventures.
-Returning home, they felt a mix of happiness and sadness, knowing they had not only found treasure but also helped someone in need."""
-sentences = story_text.split("\n")
-print(sentences)
-
 def predict_emotion(sentence):
     # emotions = {
     # "They were always together and did everything together": "male_surprised",
@@ -115,19 +89,12 @@ def predict_emotion(sentence):
     # }
     emotions = {
         "Lily and Tom had always dreamed of finding hidden treasure.": "male_surprised",
-        "One sunny afternoon, while exploring an old forest, they found a mysterious map.": "male_surprised",
-        "Excitedly, they followed it, their hearts racing with anticipation.": "male_surprised",
-        "After a long and tiring search, they finally discovered a buried chest.": "male_surprised",
-        "They opened it and were overjoyed to find it filled with gold and jewels.": "male_surprised",
-        "Just then, a sudden storm hit, and they sought shelter in a nearby cave.": "male_fearful",
         "Inside, they found an old man who had been trapped for days.": "male_fearful",
         "He was weak and fearful.": "male_sad",
-        "Tom shared their food and water with him, and Lily comforted him.": "male_sad",
-        "The old man was grateful and told them stories of his past adventures.": "male_surprised",
         "Returning home, they felt a mix of happiness and sadness, knowing they had not only found treasure but also helped someone in need.": "male_sad",
     }
 
-    return emotions.get(sentence, "male_surprised") #default emotion is neutral
+    return emotions.get(sentence, "male_happy") #default emotion is neutral
 
 
 
@@ -144,17 +111,11 @@ def predict_environment_sound(sentence):
     sounds = {
         "Lily and Tom had always dreamed of finding hidden treasure.": "birds",
         "One sunny afternoon, while exploring an old forest, they found a mysterious map.": "animals",
-        "Excitedly, they followed it, their hearts racing with anticipation.": "birds",
-        "After a long and tiring search, they finally discovered a buried chest.": "birds",
-        "They opened it and were overjoyed to find it filled with gold and jewels.": "birds",
-        "Just then, a sudden storm hit, and they sought shelter in a nearby cave.": "rain",
         "Inside, they found an old man who had been trapped for days.": "rain",
         "He was weak and fearful.": "rain",
-        "Tom shared their food and water with him, and Lily comforted him.": "fire",
         "The old man was grateful and told them stories of his past adventures.": "fire",
-        "Returning home, they felt a mix of happiness and sadness, knowing they had not only found treasure but also helped someone in need.": "birds",
     }
-    return sounds.get(sentence, "rain")
+    return sounds.get(sentence, "birds")
 
 def get_environment_sound(environment):
     sounds = {
