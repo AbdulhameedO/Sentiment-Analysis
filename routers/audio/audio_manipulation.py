@@ -2,6 +2,7 @@ from playsound import playsound
 from pydub import AudioSegment
 import requests, json
 import io
+from fastapi.responses import JSONResponse
 
 
 user_id = "FWi1BS3D9DS9WUxrFUPyPKwNUgA3"
@@ -12,7 +13,6 @@ default_voice = "s3://voice-cloning-zero-shot/a0fa25cc-5f42-4dd0-8a78-a950dd5297
 # "s3://voice-cloning-zero-shot/a59cb96d-bba8-4e24-81f2-e60b888a0275/charlottenarrativesaad/manifest.json"
 #https://play.ht/app/voices to get the voice url
 default_emotion = "male_happy"#male_sad,male_angry,male_surprised,male_fearful,male_disgust , same for female
-default_style_guidance = 10#int [0:30] 0 is neutral, 30 is very emotional
 
 #for more information on the api, visit
 #https://docs.play.ht/reference/api-generate-audio
@@ -55,7 +55,6 @@ def create_voice_job(text = "Hi man how are you doing today?",
             audio_url = data["url"]
             break
         
-    # print("Audio URL:", audio_url)
     return audio_url
 
 
@@ -71,13 +70,9 @@ def audio_from_url(url):
         return audio_content
 
     else:
-        print(f"Failed to download audio: {response.status_code} - {response.reason}")
+        print(f"Failed to load audio: {response.status_code} - {response.reason}")
         return None
 
-# generated_audio_url = "https://peregrine-results.s3.amazonaws.com/pigeon/cEYth2Tj6KwHNcGlGb_0.mp3"
-# filename = "generated_audio.mp3"
-
-# audio = audio_from_url(generated_audio_url)
 
 def predict_emotion(sentence):
     # emotions = {
@@ -111,7 +106,6 @@ def predict_environment_sound(sentence):
     sounds = {
         "Lily and Tom had always dreamed of finding hidden treasure.": "birds",
         "One sunny afternoon, while exploring an old forest, they found a mysterious map.": "animals",
-        "Inside, they found an old man who had been trapped for days.": "rain",
         "He was weak and fearful.": "rain",
         "The old man was grateful and told them stories of his past adventures.": "fire",
     }
@@ -125,7 +119,7 @@ def get_environment_sound(environment):
     "birds": "env_sounds/singing-club-of-birds_nature-sound-204240.mp3"
     }
 
-    env_sound_file = sounds.get(environment, "singing-club-of-birds_nature-sound-204240.mp3")
+    env_sound_file = sounds.get(environment, AudioSegment.silent(duration=0))  # TEST HERE
     env_sound = AudioSegment.from_file(env_sound_file)
 
     #adjust volume
@@ -133,39 +127,5 @@ def get_environment_sound(environment):
 
     return env_sound
 
-
-# create every step separately and put output in list
-
-emotions = []
-[emotions.append(predict_emotion(sentence)) for sentence in sentences]
-[print(sentence,"  :   ", emotion) for sentence, emotion in zip(sentences, emotions)]
-
-
-environments = []
-[environments.append(predict_environment_sound(sentence)) for sentence in sentences]
-print(environments)
-
-
-environment_sounds = []
-[environment_sounds.append(get_environment_sound(env)) for env in environments]
-print(environment_sounds)
-
-
-audio_urls = []
-[audio_urls.append(create_voice_job(sentence, emotion=emotion)) for sentence, emotion in zip(sentences, emotions)]
-print(audio_urls)
-
-
-audios = []
-[audios.append(audio_from_url(url)) for url in audio_urls]
-print(audios)
-
-
-merged_audio = AudioSegment.silent(duration=0)
-
-for audio, emotion, env_sound in zip(audios, emotions, environment_sounds):
-    combined = audio.overlay(env_sound, position=0)
-    merged_audio += combined
-
-merged_audio.export("story.mp3", format="mp3")
-playsound("story.mp3")
+def tokenize_text(text):
+    return text.split(".")

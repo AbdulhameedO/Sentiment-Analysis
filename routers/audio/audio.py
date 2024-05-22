@@ -1,8 +1,9 @@
 from fastapi import APIRouter, status, UploadFile, File
 from fastapi.responses import JSONResponse, FileResponse
+from pydub import AudioSegment
 
 # import audio_manipulation.py
-from .audio_manipulation import create_voice_job, audio_from_url, predict_emotion, predict_environment_sound,get_environment_sound
+from .audio_manipulation import create_voice_job, audio_from_url, predict_emotion, predict_environment_sound,get_environment_sound, tokenize_text
 
 
 router = APIRouter(
@@ -136,11 +137,19 @@ async def download_audio_file(audio_url: str):
 )
 async def text_to_speech(text: str):
     try:
-        emotion = predict_emotion(text)
-        environment_sound = predict_environment_sound(text)
-        audio_url = create_voice_job(text, emotion=emotion, style_guidance=environment_sound)
-        audio = audio_from_url(audio_url)
-        audio.export("files/generated_audio.mp3", format="mp3")
-        return FileResponse("files/generated_audio.mp3")
+        sentences = tokenize_text(text)
+        merged_audio = AudioSegment.silent(duration=0)
+        for sentence in sentences:
+            emotion = predict_emotion(sentence)
+            env = predict_environment_sound(sentence)
+            env_sound = get_environment_sound(env)
+            print(f"Generating audio for sentence: {sentence} with emotion: {emotion}")
+            audio_url = create_voice_job(sentence, emotion=emotion)
+            audio = audio_from_url(audio_url)
+            combined = audio.overlay(env_sound, position=0)
+            merged_audio += combined
+        merged_audio.export("files/generated_audio.mp3", format="mp3")
+        return JSONResponse(status_code=status.HTTP_200_OK, content={"detail": "text to speech successful"})
     except Exception as e:
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"detail": "text to speech failed"})
+    
