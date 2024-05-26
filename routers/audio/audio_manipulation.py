@@ -3,6 +3,7 @@ from pydub import AudioSegment
 import requests, json
 import io
 from fastapi.responses import JSONResponse
+from sklearn.externals import joblib
 
 
 
@@ -82,6 +83,22 @@ def audio_from_url(url):
 
 
 def predict_emotion(sentence):
+    # # Import the .pkl of the logistic regression model
+    # model = joblib.load('sentiment_analysis.pkl')
+    # vectorizer = joblib.load('sentiment_analysis_vectorizer.pkl')
+    
+    # # Tokenize the sentence
+    # tokenized = tokenize_text(sentence)
+    # # Convert the text into counts
+    # X_test_counts = vectorizer.transform(tokenized)
+    # # Predict the emotion
+    # y_pred = model.predict(X_test_counts)
+    # # Return the emotion
+    # return y_pred[0]
+    
+    
+    
+    
     # emotions = {
     # "They were always together and did everything together": "male_surprised",
     # "After a long journey, they finally found the treasure": "male_happy",
@@ -102,6 +119,22 @@ def predict_emotion(sentence):
 
 
 def predict_environment_sound(sentence):
+    # # Import the .pkl of the logistic regression model
+    # model = joblib.load('enviroment.pkl')
+    # vectorizer = joblib.load('enviroment_vectorizer.pkl')
+    
+    # # Tokenize the sentence
+    # tokenized = tokenize_text(sentence)
+    # # Convert the text into counts
+    # X_test_counts = vectorizer.transform(tokenized)
+    # # Predict the environment sound
+    # y_pred = model.predict(X_test_counts)
+    # # Return the environment sound
+    # return y_pred[0]
+
+    
+    
+    
     #hard code for now
     # sounds = {
     # "They were always together and did everything together": "rain",
