@@ -1,10 +1,9 @@
-from playsound import playsound
+# from playsound import playsound
 from pydub import AudioSegment
 import requests, json
 import io
 from fastapi.responses import JSONResponse
-from sklearn.externals import joblib
-
+import joblib
 
 
 user_id = "FWi1BS3D9DS9WUxrFUPyPKwNUgA3"
@@ -83,19 +82,26 @@ def audio_from_url(url):
 
 
 def predict_emotion(sentence):
-    # # Import the .pkl of the logistic regression model
-    # model = joblib.load('sentiment_analysis.pkl')
-    # vectorizer = joblib.load('sentiment_analysis_vectorizer.pkl')
+    # Import the .pkl of the logistic regression model
+    XGBmodel = joblib.load('routers/audio/pickles/xgboost_model.pkl')
+    XGBvectorizer = joblib.load('routers/audio/pickles/XGBvectorizer.pkl')
+    LRmodel = joblib.load('routers/audio/pickles/logistic_regression_model.pkl')
+    LRvectorizer = joblib.load('routers/audio/pickles/LRvectorizer.pkl')
+    # Try each model and return the emotion
     
-    # # Tokenize the sentence
-    # tokenized = tokenize_text(sentence)
-    # # Convert the text into counts
-    # X_test_counts = vectorizer.transform(tokenized)
-    # # Predict the emotion
-    # y_pred = model.predict(X_test_counts)
-    # # Return the emotion
-    # return y_pred[0]
+    # Convert the text into counts
+    X_test_counts = XGBvectorizer.transform([sentence])
+    # Predict the emotion
+    y_pred = XGBmodel.predict(X_test_counts)
     
+    print("XGB", y_pred[0])
+    
+    # Convert the text into counts
+    X_test_counts = LRvectorizer.transform([sentence])
+    # Predict the emotion
+    y_pred2 = LRmodel.predict(X_test_counts)
+    print("LR", y_pred2[0])
+    return y_pred2[0]
     
     
     
@@ -122,11 +128,9 @@ def predict_environment_sound(sentence):
     # # Import the .pkl of the logistic regression model
     # model = joblib.load('enviroment.pkl')
     # vectorizer = joblib.load('enviroment_vectorizer.pkl')
-    
-    # # Tokenize the sentence
-    # tokenized = tokenize_text(sentence)
+
     # # Convert the text into counts
-    # X_test_counts = vectorizer.transform(tokenized)
+    # X_test_counts = vectorizer.transform(sentence)
     # # Predict the environment sound
     # y_pred = model.predict(X_test_counts)
     # # Return the environment sound
@@ -167,7 +171,14 @@ def get_environment_sound(environment):
     return env_sound
 
 def tokenize_text(text):
+    #Split on . , ! ? 
     tokenized = text.split(".")
+    tokenized = [sentence.split(",") for sentence in tokenized]
+    tokenized = [item for sublist in tokenized for item in sublist]
+    tokenized = [sentence.split("!") for sentence in tokenized]
+    tokenized = [item for sublist in tokenized for item in sublist]
+    tokenized = [sentence.split("?") for sentence in tokenized]
+    tokenized = [item for sublist in tokenized for item in sublist]
     #remove empty string
     tokenized = list(filter(None, tokenized))
     return tokenized
