@@ -5,6 +5,10 @@ import io
 from fastapi.responses import JSONResponse
 import joblib
 
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+
+
 
 user_id = "FWi1BS3D9DS9WUxrFUPyPKwNUgA3"
 Authorization = "0c2fe6e05c934d1ea513af8fba346fd8"
@@ -82,23 +86,22 @@ def audio_from_url(url):
 
 
 def predict_emotion(sentence):
-    # Import the .pkl of the logistic regression model
     XGBmodel = joblib.load('routers/audio/pickles/xgboost_model.pkl')
     XGBvectorizer = joblib.load('routers/audio/pickles/XGBvectorizer.pkl')
     LRmodel = joblib.load('routers/audio/pickles/logistic_regression_model.pkl')
     LRvectorizer = joblib.load('routers/audio/pickles/LRvectorizer.pkl')
-    # Try each model and return the emotion
     
-    # Convert the text into counts
+    stop_words = set(stopwords.words('english'))
+    lemmatizer = WordNetLemmatizer()
+    sentence = ' '.join([lemmatizer.lemmatize(word) for word in sentence.split() if word not in stop_words])
+    
+    
     X_test_counts = XGBvectorizer.transform([sentence])
-    # Predict the emotion
     y_pred = XGBmodel.predict(X_test_counts)
     
     print("XGB", y_pred[0])
     
-    # Convert the text into counts
     X_test_counts = LRvectorizer.transform([sentence])
-    # Predict the emotion
     y_pred2 = LRmodel.predict(X_test_counts)
     print("LR", y_pred2[0])
     
@@ -114,45 +117,22 @@ def predict_emotion(sentence):
     
     return "male_happy"
     
-    
-    # emotions = {
-    # "They were always together and did everything together": "male_surprised",
-    # "After a long journey, they finally found the treasure": "male_happy",
-    # "the father of the first one died": "male_sad",
-    # "They were so happy and celebrated their success": "male_happy",
-    # "the second one was sad": "male_sad",
-    # }
-    # emotions = {
-    #     "Lily and Tom had always dreamed of finding hidden treasure.": "male_surprised",
-    #     "Inside, they found an old man who had been trapped for days.": "male_fearful",
-    #     "He was weak and fearful.": "male_sad",
-    #     "Returning home, they felt a mix of happiness and sadness, knowing they had not only found treasure but also helped someone in need.": "male_sad",
-    # }
-
-    # return emotions.get(sentence, "male_happy") #default emotion is neutral
-
-
 
 
 def predict_environment_sound(sentence):
-    # Import the .pkl of the logistic regression model
-    LR = joblib.load('LR_weather_model.pkl')
-    LRvectorizer = joblib.load('LR_weather_vectorizer.pkl')
     
-    XGB = joblib.load('XGBweather_model.pkl')
-    XGBvectorizer = joblib.load('XGBweather_vectorizer.pkl')
+    LR = joblib.load('routers/audio/pickles/LR_weather_model.pkl')
+    LRvectorizer = joblib.load('routers/audio/pickles/LR_weather_vectorizer.pkl')
     
-    # Try each model and return the environment sound
-    # Convert the text into counts
+    XGB = joblib.load('routers/audio/pickles/XGBweather_model.pkl')
+    XGBvectorizer = joblib.load('routers/audio/pickles/XGBweather_vectorizer.pkl')
+
     X_test_counts = LRvectorizer.transform([sentence])
-    # Predict the environment sound
     y_pred = LR.predict(X_test_counts)
     
     print("LR", y_pred[0])
     
-    # Convert the text into counts
     X_test_counts = XGBvectorizer.transform([sentence])
-    # Predict the environment sound
     y_pred2 = XGB.predict(X_test_counts)
     print("XGB", y_pred2[0])
     
@@ -168,23 +148,6 @@ def predict_environment_sound(sentence):
     # Clear/ Default
     return "birds"
     
-    
-    
-    #hard code for now
-    # sounds = {
-    # "They were always together and did everything together": "rain",
-    # "After a long journey, they finally found the treasure": "fire",
-    # "the father of the first one died": "rain",
-    # "They were so happy and celebrated their success": "animals",
-    # "the second one was sad": "birds"
-    # }
-    # sounds = {
-    #     "Lily and Tom had always dreamed of finding hidden treasure.": "birds",
-    #     "One sunny afternoon, while exploring an old forest, they found a mysterious map.": "animals",
-    #     "He was weak and fearful.": "rain",
-    #     "The old man was grateful and told them stories of his past adventures.": "fire",
-    # }
-    # return sounds.get(sentence, "birds")
 
 def get_environment_sound(environment):
     sounds = {
