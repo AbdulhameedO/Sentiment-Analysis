@@ -122,30 +122,51 @@ def predict_emotion(sentence):
     # "They were so happy and celebrated their success": "male_happy",
     # "the second one was sad": "male_sad",
     # }
-    emotions = {
-        "Lily and Tom had always dreamed of finding hidden treasure.": "male_surprised",
-        "Inside, they found an old man who had been trapped for days.": "male_fearful",
-        "He was weak and fearful.": "male_sad",
-        "Returning home, they felt a mix of happiness and sadness, knowing they had not only found treasure but also helped someone in need.": "male_sad",
-    }
+    # emotions = {
+    #     "Lily and Tom had always dreamed of finding hidden treasure.": "male_surprised",
+    #     "Inside, they found an old man who had been trapped for days.": "male_fearful",
+    #     "He was weak and fearful.": "male_sad",
+    #     "Returning home, they felt a mix of happiness and sadness, knowing they had not only found treasure but also helped someone in need.": "male_sad",
+    # }
 
-    return emotions.get(sentence, "male_happy") #default emotion is neutral
+    # return emotions.get(sentence, "male_happy") #default emotion is neutral
 
 
 
 
 def predict_environment_sound(sentence):
-    # # Import the .pkl of the logistic regression model
-    # model = joblib.load('enviroment.pkl')
-    # vectorizer = joblib.load('enviroment_vectorizer.pkl')
-
-    # # Convert the text into counts
-    # X_test_counts = vectorizer.transform(sentence)
-    # # Predict the environment sound
-    # y_pred = model.predict(X_test_counts)
-    # # Return the environment sound
-    # return y_pred[0]
-
+    # Import the .pkl of the logistic regression model
+    LR = joblib.load('LR_weather_model.pkl')
+    LRvectorizer = joblib.load('LR_weather_vectorizer.pkl')
+    
+    XGB = joblib.load('XGBweather_model.pkl')
+    XGBvectorizer = joblib.load('XGBweather_vectorizer.pkl')
+    
+    # Try each model and return the environment sound
+    # Convert the text into counts
+    X_test_counts = LRvectorizer.transform([sentence])
+    # Predict the environment sound
+    y_pred = LR.predict(X_test_counts)
+    
+    print("LR", y_pred[0])
+    
+    # Convert the text into counts
+    X_test_counts = XGBvectorizer.transform([sentence])
+    # Predict the environment sound
+    y_pred2 = XGB.predict(X_test_counts)
+    print("XGB", y_pred2[0])
+    
+    # map output to environment sound
+    # rain, storm , birds
+    if y_pred2[0] == 2:
+        # Rain
+        return "rain"
+    if y_pred[0] == 1:
+        # Storm 
+        return "storm"
+    
+    # Clear/ Default
+    return "birds"
     
     
     
@@ -157,19 +178,19 @@ def predict_environment_sound(sentence):
     # "They were so happy and celebrated their success": "animals",
     # "the second one was sad": "birds"
     # }
-    sounds = {
-        "Lily and Tom had always dreamed of finding hidden treasure.": "birds",
-        "One sunny afternoon, while exploring an old forest, they found a mysterious map.": "animals",
-        "He was weak and fearful.": "rain",
-        "The old man was grateful and told them stories of his past adventures.": "fire",
-    }
-    return sounds.get(sentence, "birds")
+    # sounds = {
+    #     "Lily and Tom had always dreamed of finding hidden treasure.": "birds",
+    #     "One sunny afternoon, while exploring an old forest, they found a mysterious map.": "animals",
+    #     "He was weak and fearful.": "rain",
+    #     "The old man was grateful and told them stories of his past adventures.": "fire",
+    # }
+    # return sounds.get(sentence, "birds")
 
 def get_environment_sound(environment):
     sounds = {
     "rain": "routers/audio/env_sounds/rainy-day-in-town-with-birds-singing-194011.mp3",
-    "fire": "routers/audio/env_sounds/designed-fire-winds-swoosh-04-116788.mp3",
-    "animals": "routers/audio/env_sounds/crickets-chirping_nature-sound-206330.mp3",
+    # "fire": "routers/audio/env_sounds/designed-fire-winds-swoosh-04-116788.mp3",
+    "storm": "routers/audio/env_sounds/crickets-chirping_nature-sound-206330.mp3",
     "birds": "routers/audio/env_sounds/singing-club-of-birds_nature-sound-204240.mp3"
     }
 
