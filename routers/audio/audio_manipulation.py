@@ -101,8 +101,18 @@ def predict_emotion(sentence):
     # Predict the emotion
     y_pred2 = LRmodel.predict(X_test_counts)
     print("LR", y_pred2[0])
-    return y_pred2[0]
     
+    
+    # map output to emotion
+    # male_happy, male_sad, male_angry, male_surprised, male_fearful, male_disgust , same for female
+    if y_pred2[0] == 0:
+        # sad
+        return "male_sad"
+    if y_pred[0] == 2:
+        # happy
+        return "male_surprised"
+    
+    return "male_happy"
     
     
     # emotions = {
@@ -171,10 +181,8 @@ def get_environment_sound(environment):
     return env_sound
 
 def tokenize_text(text):
-    #Split on . , ! ? 
+    #Split on . ! ? 
     tokenized = text.split(".")
-    tokenized = [sentence.split(",") for sentence in tokenized]
-    tokenized = [item for sublist in tokenized for item in sublist]
     tokenized = [sentence.split("!") for sentence in tokenized]
     tokenized = [item for sublist in tokenized for item in sublist]
     tokenized = [sentence.split("?") for sentence in tokenized]
