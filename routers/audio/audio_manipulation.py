@@ -31,7 +31,7 @@ def create_voice_job(text = "Hi",
                       voice = default_voice, 
                       output_format = "mp3", 
                       voice_engine = "PlayHT2.0", 
-                      speed = 0.83,
+                      speed = 0.70,
                       seed= rand_seed,
                       temperature = 0.1,
                       emotion = "male_happy",
@@ -93,8 +93,6 @@ def audio_from_url(url):
 
 
 def predict_emotion(sentence):
-    # XGBmodel = joblib.load('routers/audio/pickles/xgboost_model.pkl')
-    # XGBvectorizer = joblib.load('routers/audio/pickles/XGBvectorizer.pkl')
     LRmodel = joblib.load('routers/audio/pickles/logistic_regression_model.pkl')
     LRvectorizer = joblib.load('routers/audio/pickles/LRvectorizer.pkl')
     
@@ -102,31 +100,28 @@ def predict_emotion(sentence):
     lemmatizer = WordNetLemmatizer()
     sentence = ' '.join([lemmatizer.lemmatize(word) for word in sentence.split() if word not in stop_words])
     
-    
-    # X_test_counts = XGBvectorizer.transform([sentence])
-    # y_pred = XGBmodel.predict(X_test_counts)
-    
-    # print("XGB", y_pred[0])
-    
     X_test_counts = LRvectorizer.transform([sentence])
     y_pred2 = LRmodel.predict(X_test_counts)
     
+    print(y_pred2)
+    return y_pred2[0]
     
     
     # map output to emotion
     # male_happy, male_sad, male_angry, male_surprised, male_fearful, male_disgust , same for female
-    if y_pred2[0] == 0:
-        # sad
-        print("LR sad")
-        return "male_sad"
-    if y_pred2[0] == 2:
-        # happy
-        print("LR surprised")
-        return "male_surprised"
+    # if y_pred2[0] == 0:
+    #     # sad
+    #     print("LR Sad")
+    #     return "male_sad"
+    # if y_pred2[0] == 2:
+    #     # happy
+    #     print("LR Happy")
+    #     return "male_surprised"
     
-    print("LR happy")
-    return "male_happy"
+    # print("LR Neutral")
+    # return "male_happy"
     
+
 
 
 def predict_environment_sound(sentence):
@@ -134,31 +129,24 @@ def predict_environment_sound(sentence):
     LR = joblib.load('routers/audio/pickles/LR_weather_model.pkl')
     LRvectorizer = joblib.load('routers/audio/pickles/LR_weather_vectorizer.pkl')
     
-    # XGB = joblib.load('routers/audio/pickles/XGBweather_model.pkl')
-    # XGBvectorizer = joblib.load('routers/audio/pickles/XGBweather_vectorizer.pkl')
-
     X_test_counts = LRvectorizer.transform([sentence])
     y_pred = LR.predict(X_test_counts)
-    
-    
-    # X_test_counts = XGBvectorizer.transform([sentence])
-    # y_pred2 = XGB.predict(X_test_counts)
-    # print("XGB", y_pred2[0])
     
     # map output to environment sound
     # rain, storm , birds
     if y_pred[0] == 2:
         # Rain
-        print("LR rain")
+        # print("LR rain")
         return "rain"
     if y_pred[0] == 1:
         # Storm 
-        print("LR storm")
+        # print("LR storm")
         return "storm"
     
-    print("LR birds")
+    # print("LR birds")
     # Clear/ Default
     return "birds"
+    
     
 
 def get_environment_sound(environment):
@@ -171,7 +159,7 @@ def get_environment_sound(environment):
     env_sound_file = sounds.get(environment, "routers/audio/env_sounds/birds.mp3")
     env_sound = AudioSegment.from_file(env_sound_file)
     #adjust volume
-    env_sound = env_sound - 12
+    env_sound = env_sound - 6
 
     return env_sound
 
@@ -185,3 +173,12 @@ def tokenize_text(text):
     #remove empty string
     tokenized = list(filter(None, tokenized))
     return tokenized
+
+def predict_environment_sound_emotion(emotion):
+    if emotion == "male_happy":
+        return "rain"
+    if emotion == "male_sad":
+        return "wind"
+    if emotion == "male_surprised":
+        return "birds"
+    return "rain"

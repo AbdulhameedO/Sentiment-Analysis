@@ -3,8 +3,8 @@ from fastapi.responses import JSONResponse, FileResponse
 from pydub import AudioSegment
 
 # import audio_manipulation.py
-from .audio_manipulation import create_voice_job, audio_from_url, predict_emotion, predict_environment_sound,get_environment_sound, tokenize_text
-
+from .voice import text_to_speech
+from .audio_manipulation import create_voice_job, audio_from_url, predict_emotion,predict_environment_sound_emotion, predict_environment_sound,get_environment_sound, tokenize_text
 
 router = APIRouter(
     prefix="/audio",
@@ -138,17 +138,28 @@ async def download_audio_file(audio_url: str):
 async def text_to_speech(text: str):
     try:
         sentences = tokenize_text(text)
+        result = []
         merged_audio = AudioSegment.silent(duration=0)
+        
+        # Collect emotions for each sentence
+        emotions = []
         for sentence in sentences:
             emotion = predict_emotion(sentence)
-            env = predict_environment_sound(sentence)
+            result.append((sentence, emotion, emotion))
+            emotions.append(emotion)
+        
+        # Generate voice for the entire list of sentences
+        audio_list = text_to_speech(result)
+        
+        # Combine generated voice with environment sounds
+        for i, sentence in enumerate(sentences):
+            env = predict_environment_sound_emotion(emotions[i])
             env_sound = get_environment_sound(env)
-            audio_url = create_voice_job(sentence, emotion=emotion)
-            audio = audio_from_url(audio_url)
+            audio = audio_list[i]
             combined = audio.overlay(env_sound, position=0)
             merged_audio += combined
-        merged_audio.export("generated_audio.mp3", format="mp3")
-        return JSONResponse(status_code=status.HTTP_200_OK, content={"detail": "text to speech successful"})
+        
+        merged_audio.export("files/generated_audio_final.mp3", format="mp3")
+        return JSONResponse(status_code=status.HTTP_200_OK, content={"detail": "text to speech successful", "emotions": result})
     except Exception as e:
-        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"detail": "text to speech failed"})
-    
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"detail": str(e)})
