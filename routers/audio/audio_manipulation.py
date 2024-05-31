@@ -8,13 +8,18 @@ import joblib
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
+#implement random
 
+import random
+
+#get random number integer
+rand_seed = random.randint(0, 500)
 
 user_id = "FWi1BS3D9DS9WUxrFUPyPKwNUgA3"
 Authorization = "0c2fe6e05c934d1ea513af8fba346fd8"
 
 #default values
-default_voice = "s3://voice-cloning-zero-shot/a0fa25cc-5f42-4dd0-8a78-a950dd5297cd/original/manifest.json"
+default_voice = "s3://voice-cloning-zero-shot/d82d246c-148b-457f-9668-37b789520891/adolfosaad/manifest.json"
 # "s3://voice-cloning-zero-shot/a59cb96d-bba8-4e24-81f2-e60b888a0275/charlottenarrativesaad/manifest.json"
 #https://play.ht/app/voices to get the voice url
 default_emotion = "male_happy"#male_sad,male_angry,male_surprised,male_fearful,male_disgust , same for female
@@ -26,8 +31,9 @@ def create_voice_job(text = "Hi",
                       voice = default_voice, 
                       output_format = "mp3", 
                       voice_engine = "PlayHT2.0", 
-                      speed = 0.86,
-                      seed= 3,
+                      speed = 0.83,
+                      seed= rand_seed,
+                      temperature = 0.1,
                       emotion = "male_happy",
                       style_guidance = 10):
 
@@ -39,6 +45,7 @@ def create_voice_job(text = "Hi",
         "output_format": output_format,
         "voice_engine": voice_engine,
         "speed": speed,
+        "temperature": temperature,
         "emotion": emotion,
         "seed": seed,
         "style_guidance": style_guidance
@@ -156,13 +163,12 @@ def predict_environment_sound(sentence):
 
 def get_environment_sound(environment):
     sounds = {
-    # "rain": "routers/audio/env_sounds/rainy-day-in-town-with-birds-singing-194011.mp3",
-    # "fire": "routers/audio/env_sounds/designed-fire-winds-swoosh-04-116788.mp3",
-    # "storm": "routers/audio/env_sounds/crickets-chirping_nature-sound-206330.mp3",
-    "birds": "routers/audio/env_sounds/singing-club-of-birds_nature-sound-204240.mp3"
+    "rain": "routers/audio/env_sounds/rain.mp3",
+    "storm": "routers/audio/env_sounds/wind.mp3",
+    "birds": "routers/audio/env_sounds/birds.mp3"
     }
 
-    env_sound_file = sounds.get(environment, "routers/audio/env_sounds/singing-club-of-birds_nature-sound-204240.mp3")  # TEST HERE
+    env_sound_file = sounds.get(environment, "routers/audio/env_sounds/birds.mp3")
     env_sound = AudioSegment.from_file(env_sound_file)
     #adjust volume
     env_sound = env_sound - 12
