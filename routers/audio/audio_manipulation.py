@@ -8,6 +8,8 @@ import joblib
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
+from google.cloud import texttospeech
+
 #implement random
 
 import random
@@ -93,8 +95,6 @@ def audio_from_url(url):
 
 
 def predict_emotion(sentence):
-    # XGBmodel = joblib.load('routers/audio/pickles/xgboost_model.pkl')
-    # XGBvectorizer = joblib.load('routers/audio/pickles/XGBvectorizer.pkl')
     LRmodel = joblib.load('routers/audio/pickles/logistic_regression_model.pkl')
     LRvectorizer = joblib.load('routers/audio/pickles/LRvectorizer.pkl')
     
@@ -103,29 +103,21 @@ def predict_emotion(sentence):
     sentence = ' '.join([lemmatizer.lemmatize(word) for word in sentence.split() if word not in stop_words])
     
     
-    # X_test_counts = XGBvectorizer.transform([sentence])
-    # y_pred = XGBmodel.predict(X_test_counts)
-    
-    # print("XGB", y_pred[0])
-    
     X_test_counts = LRvectorizer.transform([sentence])
-    y_pred2 = LRmodel.predict(X_test_counts)
+    y_pred = LRmodel.predict(X_test_counts)
     
-    
-    
-    # map output to emotion
     # male_happy, male_sad, male_angry, male_surprised, male_fearful, male_disgust , same for female
-    if y_pred2[0] == 0:
+    if y_pred[0] == 0:
         # sad
         print("LR sad")
-        return "male_sad"
-    if y_pred2[0] == 2:
+        return ("male_sad", 0)
+    if y_pred[0] == 2:
         # happy
         print("LR surprised")
-        return "male_surprised"
+        return ("male_surprised", 2)
     
     print("LR happy")
-    return "male_happy"
+    return ("male_happy", 1)
     
 
 
@@ -134,27 +126,21 @@ def predict_environment_sound(sentence):
     LR = joblib.load('routers/audio/pickles/LR_weather_model.pkl')
     LRvectorizer = joblib.load('routers/audio/pickles/LR_weather_vectorizer.pkl')
     
-    # XGB = joblib.load('routers/audio/pickles/XGBweather_model.pkl')
-    # XGBvectorizer = joblib.load('routers/audio/pickles/XGBweather_vectorizer.pkl')
 
     X_test_counts = LRvectorizer.transform([sentence])
     y_pred = LR.predict(X_test_counts)
-    
-    
-    # X_test_counts = XGBvectorizer.transform([sentence])
-    # y_pred2 = XGB.predict(X_test_counts)
-    # print("XGB", y_pred2[0])
+
     
     # map output to environment sound
-    # rain, storm , birds
+    # rain, wind , birds
     if y_pred[0] == 2:
         # Rain
         print("LR rain")
         return "rain"
     if y_pred[0] == 1:
         # Storm 
-        print("LR storm")
-        return "storm"
+        print("LR wind")
+        return "wind"
     
     print("LR birds")
     # Clear/ Default
@@ -164,16 +150,69 @@ def predict_environment_sound(sentence):
 def get_environment_sound(environment):
     sounds = {
     "rain": "routers/audio/env_sounds/rain.mp3",
-    "storm": "routers/audio/env_sounds/wind.mp3",
+    "wind": "routers/audio/env_sounds/wind.mp3",
     "birds": "routers/audio/env_sounds/birds.mp3"
     }
 
     env_sound_file = sounds.get(environment, "routers/audio/env_sounds/birds.mp3")
     env_sound = AudioSegment.from_file(env_sound_file)
     #adjust volume
-    env_sound = env_sound - 12
+    env_sound = env_sound
 
     return env_sound
+
+def predict_emotion_google(sentence):
+    LRmodel = joblib.load('routers/audio/pickles/logistic_regression_model.pkl')
+    LRvectorizer = joblib.load('routers/audio/pickles/LRvectorizer.pkl')
+    
+    stop_words = set(stopwords.words('english'))
+    lemmatizer = WordNetLemmatizer()
+    sentence = ' '.join([lemmatizer.lemmatize(word) for word in sentence.split() if word not in stop_words])
+    
+    
+    
+    X_test_counts = LRvectorizer.transform([sentence])
+    y_pred = LRmodel.predict(X_test_counts)
+    
+    return (sentence,y_pred[0],y_pred[0])
+
+def text_to_speech(sentences, filename='output.mp3'):
+    # Instantiate a client
+    client = texttospeech.TextToSpeechClient()
+
+    # Build the SSML text input with varied emotional tones
+    ssml_text = "<speak>"
+    for sentence, score, _ in sentences:
+        if score > 1.5:
+            prosody = 'rate="medium" pitch="high"'
+        elif score < 0.5:
+            prosody = 'rate="slow" pitch="low"'
+        else:
+            prosody = 'rate="medium" pitch="medium"'
+        
+        ssml_text += f'<prosody {prosody}>{sentence}</prosody> '
+    ssml_text += "</speak>"
+
+    # Set the SSML input to be synthesized
+    synthesis_input = texttospeech.SynthesisInput(ssml=ssml_text)
+
+    # Build the voice request, select the language code ("en-US") and the ssml voice gender ("neutral")
+    voice = texttospeech.VoiceSelectionParams(
+        language_code="en-US",name="en-US-Wavenet-B" ,ssml_gender=texttospeech.SsmlVoiceGender.MALE)
+
+    # Select the type of audio file you want returned
+    audio_config = texttospeech.AudioConfig(audio_encoding=texttospeech.AudioEncoding.MP3)
+
+    # Perform the text-to-speech request on the text input with the selected voice parameters and audio file type
+    response = client.synthesize_speech(input=synthesis_input, voice=voice, audio_config=audio_config)
+
+    # Write the response to the output file
+    with open(filename, "wb") as out:
+        out.write(response.audio_content)
+        print(f'Audio content written to file "{filename}"')
+    # return response.audio_content
+
+
 
 def tokenize_text(text):
     #Split on . ! ? 
